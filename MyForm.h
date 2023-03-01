@@ -1,12 +1,21 @@
 ﻿#include <Windows.h>
+#include <Wbemidl.h>
 #include <vector>
 #include <stdint.h>
+#include <ctime>
+#include <vcclr.h>
+#include <string>
+
+
 #pragma once
+#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "User32.lib")
+
 
 // Set the global variables
 HANDLE hSerial;
 std::vector<uint8_t> dataToWrite;
-std::vector<uint32_t> timeToWrite;
+std::vector<uint8_t> timeToWrite;
 
 // Define the CRC8 polynom and lookup table
 #define CRC8_POLY 0x07
@@ -57,6 +66,7 @@ namespace PeopleCalculation {
 	private: System::Windows::Forms::Label^ label3;
 	private: System::Windows::Forms::Label^ label4;
 	private: System::Windows::Forms::Button^ button4;
+	private: System::Windows::Forms::ComboBox^ comboBox1;
 
 	private:
 		System::ComponentModel::Container^ components;
@@ -72,6 +82,7 @@ namespace PeopleCalculation {
 			this->label3 = (gcnew System::Windows::Forms::Label());
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->button4 = (gcnew System::Windows::Forms::Button());
+			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
 			this->SuspendLayout();
 			// 
 			// button1
@@ -84,19 +95,8 @@ namespace PeopleCalculation {
 			this->button1->TabIndex = 0;
 			this->button1->Text = L"Start";
 			this->button1->UseVisualStyleBackColor = true;
+			this->button1->Visible = false;
 			this->button1->Click += gcnew System::EventHandler(this, &MyForm::button1_Click);
-			// 
-			// button2
-			// 
-			this->button2->Font = (gcnew System::Drawing::Font(L"Times New Roman", 11, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
-				static_cast<System::Byte>(0)));
-			this->button2->Location = System::Drawing::Point(874, 520);
-			this->button2->Name = L"button2";
-			this->button2->Size = System::Drawing::Size(199, 52);
-			this->button2->TabIndex = 2;
-			this->button2->Text = L"Delete data";
-			this->button2->UseVisualStyleBackColor = true;
-			this->button2->Click += gcnew System::EventHandler(this, &MyForm::button2_Click);
 			// 
 			// button3
 			// 
@@ -108,19 +108,21 @@ namespace PeopleCalculation {
 			this->button3->TabIndex = 1;
 			this->button3->Text = L" Set time and date";
 			this->button3->UseVisualStyleBackColor = true;
+			this->button3->Visible = false;
 			this->button3->Click += gcnew System::EventHandler(this, &MyForm::button3_Click);
 			// 
-			// button4
+			// button2
 			// 
-			this->button4->Font = (gcnew System::Drawing::Font(L"Times New Roman", 11, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+			this->button2->Font = (gcnew System::Drawing::Font(L"Times New Roman", 11, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(0)));
-			this->button4->Location = System::Drawing::Point(554, 611);
-			this->button4->Name = L"button4";
-			this->button4->Size = System::Drawing::Size(217, 52);
-			this->button4->TabIndex = 7;
-			this->button4->Text = L"Show logs";
-			this->button4->UseVisualStyleBackColor = true;
-			this->button4->Click += gcnew System::EventHandler(this, &MyForm::button4_Click);
+			this->button2->Location = System::Drawing::Point(874, 520);
+			this->button2->Name = L"button2";
+			this->button2->Size = System::Drawing::Size(199, 52);
+			this->button2->TabIndex = 2;
+			this->button2->Text = L"Delete data";
+			this->button2->UseVisualStyleBackColor = true;
+			this->button2->Visible = false;
+			this->button2->Click += gcnew System::EventHandler(this, &MyForm::button2_Click);
 			// 
 			// label1
 			// 
@@ -132,6 +134,7 @@ namespace PeopleCalculation {
 			this->label1->Size = System::Drawing::Size(193, 33);
 			this->label1->TabIndex = 3;
 			this->label1->Text = L"Total people in:";
+			this->label1->Visible = false;
 			// 
 			// label2
 			// 
@@ -143,6 +146,7 @@ namespace PeopleCalculation {
 			this->label2->Size = System::Drawing::Size(207, 33);
 			this->label2->TabIndex = 4;
 			this->label2->Text = L"Total people out:";
+			this->label2->Visible = false;
 			// 
 			// label3
 			// 
@@ -154,6 +158,7 @@ namespace PeopleCalculation {
 			this->label3->Size = System::Drawing::Size(36, 33);
 			this->label3->TabIndex = 5;
 			this->label3->Text = L"...";
+			this->label3->Visible = false;
 			// 
 			// label4
 			// 
@@ -165,6 +170,33 @@ namespace PeopleCalculation {
 			this->label4->Size = System::Drawing::Size(36, 33);
 			this->label4->TabIndex = 6;
 			this->label4->Text = L"...";
+			this->label4->Visible = false;
+			// 
+			// button4
+			// 
+			this->button4->Font = (gcnew System::Drawing::Font(L"Times New Roman", 11, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->button4->Location = System::Drawing::Point(554, 611);
+			this->button4->Name = L"button4";
+			this->button4->Size = System::Drawing::Size(217, 52);
+			this->button4->TabIndex = 7;
+			this->button4->Text = L"Show logs";
+			this->button4->UseVisualStyleBackColor = true;
+			this->button4->Visible = false;
+			this->button4->Click += gcnew System::EventHandler(this, &MyForm::button4_Click);
+			// 
+			// comboBox1
+			// 
+			this->comboBox1->Font = (gcnew System::Drawing::Font(L"Times New Roman", 10.875F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->comboBox1->FormattingEnabled = true;
+			this->comboBox1->Items->AddRange(gcnew cli::array< System::Object^  >(1) { L"Device list" });
+			this->comboBox1->Location = System::Drawing::Point(517, 105);
+			this->comboBox1->Name = L"comboBox1";
+			this->comboBox1->Size = System::Drawing::Size(254, 41);
+			this->comboBox1->TabIndex = 8;
+			this->comboBox1->Text = L"    Choose device";
+			this->comboBox1->SelectedIndexChanged += gcnew System::EventHandler(this, &MyForm::comboBox1_SelectedIndexChanged);
 			// 
 			// MyForm
 			// 
@@ -173,6 +205,7 @@ namespace PeopleCalculation {
 			this->AutoSize = true;
 			this->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
 			this->ClientSize = System::Drawing::Size(1332, 758);
+			this->Controls->Add(this->comboBox1);
 			this->Controls->Add(this->button4);
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->label3);
@@ -186,9 +219,11 @@ namespace PeopleCalculation {
 			this->Text = L"People Calculation";
 			this->ResumeLayout(false);
 			this->PerformLayout();
+
 		}
 #pragma endregion
 
+	// Get checksun
 	uint8_t crc8(const std::vector<uint8_t>& data)
 	{
 		uint8_t crc = 0x00;
@@ -197,18 +232,29 @@ namespace PeopleCalculation {
 		}
 		return crc;
 	}
-	// Overload using "uint32_t" type
-	uint32_t crc8_32(const std::vector<uint32_t>& data)
+
+
+	// Split 4-byte number into bytes
+	std::vector<uint8_t> splitToBytes(uint32_t number)
 	{
-		uint32_t crc = 0x00;
-		DWORD dword;
-		for (const auto& byte : data) {
-			crc = crc8_table[crc ^ dword];
-		}
-		return crc;
+		uint8_t byte1 = (number >> 24) & 0xFF;
+		uint8_t byte2 = (number >> 16) & 0xFF;
+		uint8_t byte3 = (number >> 8) & 0xFF;
+		uint8_t byte4 = number & 0xFF;
+		return { byte1, byte2, byte3, byte4 };
+	}
+
+	// Compose 4 bytes into 4-byte number
+	uint32_t composeToNumber(std::vector<uint8_t> bytes, int startIndex)
+	{
+		return (static_cast<uint32_t>(bytes[startIndex]) << 24) |
+			   (static_cast<uint32_t>(bytes[startIndex + 1]) << 16) |
+			   (static_cast<uint32_t>(bytes[startIndex + 2]) << 8) |
+			   static_cast<uint32_t>(bytes[startIndex + 3]);
 	}
 
 
+	// Write data to serial port
 	void write(std::vector<uint8_t> instrNumber, bool showMessages)
 	{
 		// Sending an instruction to serial port
@@ -217,24 +263,11 @@ namespace PeopleCalculation {
 		if (!WriteFile(hSerial, LP(&instrNumber), instrNumber.size(), &bytesWritten, NULL))
 		{
 			if (showMessages) MessageBox::Show("Error writing to serial port");
-//			CloseHandle(hSerial);
 		}
 		if (showMessages) MessageBox::Show("Bytes written: " + bytesWritten);		// Optional
 	}
-	// Overload using "uint32_t" type
-	void write32(std::vector<uint32_t> instrNumber, bool showMessages)	// Overload using uint32_t type
-	{
-		// Sending an instruction to serial port
-		DWORD bytesWritten;
-
-		if (!WriteFile(hSerial, LP(&instrNumber), instrNumber.size(), &bytesWritten, NULL))
-		{
-			if (showMessages) MessageBox::Show("Error writing to serial port");
-//			CloseHandle(hSerial);
-		}
-		if (showMessages) MessageBox::Show("Bytes written: " + bytesWritten);		// Optional
-	}
-
+	
+	// Read data from serial port
 	std::vector<uint8_t> read(bool showMessages)
 	{
 		// Reading the data from serial port
@@ -244,28 +277,13 @@ namespace PeopleCalculation {
 		if (!ReadFile(hSerial, LP(&dataToRead), dataToRead.size(), &bytesRead, NULL))
 		{
 			if (showMessages) MessageBox::Show("Error reading from serial port");
-//			CloseHandle(hSerial);
-		}
-		if (showMessages) MessageBox::Show("Bytes read: " + bytesRead);			// Optional
-		return dataToRead;
-	}
-	// Overload using "uint32_t" type
-	std::vector<uint32_t> read32(bool showMessages)		// Overload using uint32_t type
-	{
-		// Reading the data from serial port
-		std::vector<uint32_t> dataToRead;
-		DWORD bytesRead;
-
-		if (!ReadFile(hSerial, LP(&dataToRead), dataToRead.size(), &bytesRead, NULL))
-		{
-			if (showMessages) MessageBox::Show("Error reading from serial port");
-//			CloseHandle(hSerial);
 		}
 		if (showMessages) MessageBox::Show("Bytes read: " + bytesRead);			// Optional
 		return dataToRead;
 	}
 
 
+	// Send data and return the answer
 	std::vector<uint8_t> sendData(std::vector<uint8_t> dataToWrite)
 	{
 		uint8_t checksum = crc8(dataToWrite);
@@ -279,35 +297,22 @@ namespace PeopleCalculation {
 		}
 		return receivedData;
 	}
-	// Overload using "uint32_t" type
-	std::vector<uint32_t> sendData32(std::vector<uint32_t> dataToWrite)
-	{
-		uint32_t checksum = crc8_32(dataToWrite);
-		dataToWrite.push_back(checksum);
-		write32(dataToWrite, (dataToWrite[0]) > 2);
-		std::vector<uint32_t> receivedData = read32((dataToWrite[0]) > 2);
-		if (crc8_32(dataToWrite) != crc8_32(receivedData))
-		{
-			MessageBox::Show("Checksum error: Data is corrupted");
-			return { 0 };
-		}
-		return receivedData;
-	}
 
 
+	// Check if device connected
 	bool isConnected()
 	{
-		// Check if device connected
+		bool connection = false;
 		if (sendData({ 1 }).size() == 0)
 		{
 			MessageBox::Show("Device is not connected");
-			return false;
-//			CloseHandle(hSerial);
 		}
-		else return true;
+		else connection = true;
+		return connection;
 	}
 
 
+// Get data from device
 private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	// Check if device connected
@@ -320,8 +325,8 @@ private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e
 			MessageBox::Show("Error accessing data: There is no data available");
 			return;
 		}
-
-		while (true)
+		bool quitKey = true;
+		while (quitKey)
 		{
 			// Number of people in
 			dataToWrite = sendData({ 3 });
@@ -331,52 +336,85 @@ private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e
 			dataToWrite = sendData({ 4 });
 			label4->Text = Convert::ToString((dataToWrite.size() > 1) ? dataToWrite[0] : 0);
 
-			Sleep(2000);
+			// Set the timer
+			clock_t timestamp = clock();
+			while (quitKey && (clock() - timestamp) < 2000)
+			{
+				// Check if the user has pressed the "Q" key
+				if (GetAsyncKeyState('Q') & 0x8000) {
+					MessageBox::Show("Q was pressed");
+					quitKey = false;
+				}
+			} 
 		}
 	}
 }
 
+// Reset device data
 private: System::Void button2_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	// Check if device connected
-	isConnected();
-
-	// Reseting data
-	if (sendData({ 5 }).size() == 0)
+	if (isConnected())
 	{
-		MessageBox::Show("Failed to reset data");
+		// Reseting data
+		if (sendData({ 5 }).size() == 0)
+		{
+			MessageBox::Show("Failed to reset data");
+		}
 	}
 }
 
+// Set device time
 private: System::Void button3_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	// Check if device connected
-	isConnected();
-
-	// Set device time
-	if (sendData32({6, 1676929636}).size() == 0)
+	if (isConnected())
 	{
-		MessageBox::Show("Error setting time and date");
+		// Set device time
+		std::vector<uint8_t> unixTimeBitwise = splitToBytes(1676929636);
+		if (sendData({ 6, unixTimeBitwise[0], unixTimeBitwise[1],
+			unixTimeBitwise[2], unixTimeBitwise[3] }).size() == 0)
+		{
+			MessageBox::Show("Error setting time and date");
+		}
 	}
 }
 
+// Get device time
 private: System::Void button4_Click(System::Object^ sender, System::EventArgs^ e) {
 
 	// Check if device connected
-	isConnected();
-
-	// Getting device time
-	timeToWrite = sendData32({ 7 });
-	if (timeToWrite.size() == 0)
+	if (isConnected())
 	{
-		MessageBox::Show("Error getting time and date");
-	}
-	else
-	{
-		int unixTime = timeToWrite[0];
+		// Getting device time
+		timeToWrite = sendData({ 7 });
+		if (timeToWrite.size() == 0)
+		{
+			MessageBox::Show("Error getting time and date");
+		}
+		else
+		{
+			uint32_t unixTime = composeToNumber(timeToWrite, 0);
+			MessageBox::Show("Unix time is " + (int)unixTime);
+		}
 	}
 }
 
+private: System::Void comboBox1_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) {
+
+
+	comboBox1->Visible = false;
+
+	label1->Visible = true;
+	label2->Visible = true;
+	label3->Visible = true;
+	label4->Visible = true;
+
+	button1->Visible = true;
+	button2->Visible = true;
+	button3->Visible = true;
+	button4->Visible = true;
+}
 
 };
 };
