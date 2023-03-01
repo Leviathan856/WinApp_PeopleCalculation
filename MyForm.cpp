@@ -1,6 +1,5 @@
-#include "MyForm.h"
-#include <Windows.h>
 #include <tchar.h>
+#include "MyForm.h"
 
 using namespace PeopleCalculation;
 
@@ -62,5 +61,4 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	CloseHandle(hSerial);
 	return 0;
 }
-
 
