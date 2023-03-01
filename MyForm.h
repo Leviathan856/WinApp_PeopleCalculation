@@ -312,6 +312,45 @@ namespace PeopleCalculation {
 	}
 
 
+	// Get list of connected devices
+	void FillComboBoxWithDevices(HWND comboBoxHandle)
+	{
+		// Initialize COM library
+		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+		// Create a connection to the WMI service
+		IWbemLocator* pLocator = NULL;
+		IWbemServices* pServices = NULL;
+		CoCreateInstance(CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLocator);
+		pLocator->ConnectServer(BSTR(L"ROOT\\CIMV2"), NULL, NULL, NULL, 0, NULL, NULL, &pServices);
+
+		// Query the WMI service for the list of connected devices
+		IEnumWbemClassObject* pEnumerator = NULL;
+		pServices->ExecQuery(BSTR(L"WQL"), BSTR(L"SELECT * FROM Win32_PnPEntity"), WBEM_FLAG_FORWARD_ONLY, NULL, &pEnumerator);
+
+		// Iterate through the list of devices and add them to the combobox
+		IWbemClassObject* pObject = NULL;
+		ULONG uReturned = 0;
+		while (pEnumerator->Next(WBEM_INFINITE, 1, &pObject, &uReturned) == S_OK)
+		{
+			VARIANT var;
+			pObject->Get(L"Caption", 0, &var, NULL, NULL);
+			if (var.vt == VT_BSTR)
+			{
+				SendMessage(comboBoxHandle, CB_ADDSTRING, 0, (LPARAM)var.bstrVal);
+			}
+			VariantClear(&var);
+			pObject->Release();
+		}
+
+		// Clean up
+		pEnumerator->Release();
+		pServices->Release();
+		pLocator->Release();
+		CoUninitialize();
+	}
+
+
 // Get data from device
 private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
 
