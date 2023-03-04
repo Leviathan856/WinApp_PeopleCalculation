@@ -21,7 +21,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	if (hSerial == INVALID_HANDLE_VALUE)
 	{
 		MessageBox::Show("Error opening serial port.");
-//		exit(1);	// Disable for testing
 	}
 	else
 	{
@@ -30,7 +29,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		if (!GetCommState(hSerial, &dcbSerialParams))
 		{
 			MessageBox::Show("Error getting serial port state");
-			CloseHandle(hSerial);
+//			CloseHandle(hSerial);
 		}
 		dcbSerialParams.BaudRate = CBR_115200;
 		dcbSerialParams.ByteSize = 8;
@@ -40,7 +39,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		if (!GetCommState(hSerial, &dcbSerialParams))
 		{
 			MessageBox::Show("Error getting serial port state");
-			CloseHandle(hSerial);
+//			CloseHandle(hSerial);
 		}
 
 		// Setting a 2-second timeouts for reading and writing data
@@ -53,7 +52,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		if (!SetCommTimeouts(hSerial, &timeouts))
 		{
 			MessageBox::Show("Error setting timeouts");
-			CloseHandle(hSerial);
+//			CloseHandle(hSerial);
 		}
 	}
 

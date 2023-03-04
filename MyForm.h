@@ -1,19 +1,30 @@
 ﻿#include <Windows.h>
+#include <comdef.h>
 #include <Wbemidl.h>
 #include <vector>
-#include <stdint.h>
 #include <ctime>
 #include <vcclr.h>
 #include <string>
+#include <SetupAPI.h>
+
+
 
 
 #pragma once
+
 #pragma comment(lib, "wbemuuid.lib")
-#pragma comment(lib, "User32.lib")
+#pragma comment(lib, "user32.lib")
+
+#pragma comment(lib, "setupapi.lib")
+//#pragma comment(lib, "advapi32.lib")
+//#pragma comment(lib, "credui.lib")
+//#pragma comment(lib, "kernel32.lib")
+
 
 
 // Set the global variables
 HANDLE hSerial;
+HWND comboBoxHandle;
 std::vector<uint8_t> dataToWrite;
 std::vector<uint8_t> timeToWrite;
 
@@ -46,6 +57,10 @@ namespace PeopleCalculation {
 		MyForm(void)
 		{
 			InitializeComponent();
+			IntPtr hwndComboBox = comboBox1->Handle;
+			HWND comboBoxHandle = static_cast<HWND>(hwndComboBox.ToPointer());
+//			FillComboBoxWithDevices(comboBoxHandle);
+//			EnumerateDevices(comboBoxHandle);
 		}
 
 	protected:
@@ -223,6 +238,8 @@ namespace PeopleCalculation {
 		}
 #pragma endregion
 
+
+
 	// Get checksun
 	uint8_t crc8(const std::vector<uint8_t>& data)
 	{
@@ -322,11 +339,11 @@ namespace PeopleCalculation {
 		IWbemLocator* pLocator = NULL;
 		IWbemServices* pServices = NULL;
 		CoCreateInstance(CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLocator);
-		pLocator->ConnectServer(BSTR(L"ROOT\\CIMV2"), NULL, NULL, NULL, 0, NULL, NULL, &pServices);
+		pLocator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, NULL, 0, NULL, NULL, &pServices);
 
 		// Query the WMI service for the list of connected devices
 		IEnumWbemClassObject* pEnumerator = NULL;
-		pServices->ExecQuery(BSTR(L"WQL"), BSTR(L"SELECT * FROM Win32_PnPEntity"), WBEM_FLAG_FORWARD_ONLY, NULL, &pEnumerator);
+		pServices->ExecQuery(_bstr_t(L"WQL"), _bstr_t(L"SELECT * FROM Win32_PnPEntity"), WBEM_FLAG_FORWARD_ONLY, NULL, &pEnumerator);
 
 		// Iterate through the list of devices and add them to the combobox
 		IWbemClassObject* pObject = NULL;
@@ -349,6 +366,45 @@ namespace PeopleCalculation {
 		pLocator->Release();
 		CoUninitialize();
 	}
+
+
+	// Helper function to convert a WCHAR string to std::string
+	std::string WideToMultiByte(const WCHAR* wideString) {
+		int size = WideCharToMultiByte(CP_UTF8, 0, wideString, -1, nullptr, 0, nullptr, nullptr);
+		std::string result(size, '\0');
+		WideCharToMultiByte(CP_UTF8, 0, wideString, -1, (char*)(result).data(), size, nullptr, nullptr);
+		return result;
+	}
+
+	// Enumerate connected devices and add their friendly names to the combobox
+	void EnumerateDevices(HWND combobox) {
+		// Get the device information set for all present devices
+		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&GUID_DEVINTERFACE_COMPORT, nullptr, nullptr, DIGCF_PRESENT);
+		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
+			// Failed to get device information set
+			return;
+		}
+		// Enumerate all devices in the set and add their friendly names to the combobox
+		SP_DEVINFO_DATA deviceInfoData;
+		deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+		DWORD index = 0;
+		while (SetupDiEnumDeviceInfo(deviceInfoSet, index++, &deviceInfoData)) {
+			// Get the friendly name of the device
+			WCHAR friendlyName[MAX_PATH];
+			if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_FRIENDLYNAME, nullptr,
+				reinterpret_cast<PBYTE>(friendlyName), sizeof(friendlyName), nullptr)) {
+				// Add the friendly name to the combobox
+				std::string friendlyNameMB = WideToMultiByte(friendlyName);
+				SendMessage(combobox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(friendlyNameMB.c_str()));
+			}
+		}
+
+		// Clean up
+		SetupDiDestroyDeviceInfoList(deviceInfoSet);
+	}
+
+
+
 
 
 // Get data from device
