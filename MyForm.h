@@ -1,23 +1,16 @@
 ﻿#include <Windows.h>
-#include <comdef.h>
-#include <Wbemidl.h>
+//#include <comdef.h>
 #include <vector>
 #include <ctime>
 #include <vcclr.h>
 #include <string>
 #include <SetupAPI.h>
-
-
-
+//#include <WinBase.h>
 
 #pragma once
 
-#pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "user32.lib")
-
 #pragma comment(lib, "setupapi.lib")
-//#pragma comment(lib, "advapi32.lib")
-//#pragma comment(lib, "credui.lib")
 //#pragma comment(lib, "kernel32.lib")
 
 
@@ -27,6 +20,7 @@ HANDLE hSerial;
 HWND comboBoxHandle;
 std::vector<uint8_t> dataToWrite;
 std::vector<uint8_t> timeToWrite;
+
 
 // Define the CRC8 polynom and lookup table
 #define CRC8_POLY 0x07
@@ -59,8 +53,22 @@ namespace PeopleCalculation {
 			InitializeComponent();
 			IntPtr hwndComboBox = comboBox1->Handle;
 			HWND comboBoxHandle = static_cast<HWND>(hwndComboBox.ToPointer());
-//			FillComboBoxWithDevices(comboBoxHandle);
-//			EnumerateDevices(comboBoxHandle);
+			EnumerateDevices(comboBoxHandle);
+			if (comboBox1->Items->Count == 0)
+			{
+				comboBox1->Visible = false;
+
+				label1->Visible = true;
+				label2->Visible = true;
+				label3->Visible = true;
+				label4->Visible = true;
+				button1->Visible = true;
+				button2->Visible = true;
+				button3->Visible = true;
+				button4->Visible = true;
+
+				MessageBox::Show("No serial port devices are connected!");
+			}
 		}
 
 	protected:
@@ -205,12 +213,11 @@ namespace PeopleCalculation {
 			this->comboBox1->Font = (gcnew System::Drawing::Font(L"Times New Roman", 10.875F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(0)));
 			this->comboBox1->FormattingEnabled = true;
-			this->comboBox1->Items->AddRange(gcnew cli::array< System::Object^  >(1) { L"Device list" });
-			this->comboBox1->Location = System::Drawing::Point(517, 105);
+			this->comboBox1->Location = System::Drawing::Point(354, 102);
 			this->comboBox1->Name = L"comboBox1";
-			this->comboBox1->Size = System::Drawing::Size(254, 41);
+			this->comboBox1->Size = System::Drawing::Size(605, 41);
 			this->comboBox1->TabIndex = 8;
-			this->comboBox1->Text = L"    Choose device";
+			this->comboBox1->Text = L"                            Choose device";
 			this->comboBox1->SelectedIndexChanged += gcnew System::EventHandler(this, &MyForm::comboBox1_SelectedIndexChanged);
 			// 
 			// MyForm
@@ -307,7 +314,11 @@ namespace PeopleCalculation {
 		dataToWrite.push_back(checksum);
 		write(dataToWrite, (dataToWrite[0]) > 2);
 		std::vector<uint8_t> receivedData = read((dataToWrite[0]) > 2);
-		if (crc8(dataToWrite) != crc8(receivedData))
+		if (receivedData.empty())
+		{
+			return { 0 };
+		}
+		else if (crc8(dataToWrite) != crc8(receivedData))
 		{
 			MessageBox::Show("Checksum error: Data is corrupted");
 			return { 0 };
@@ -320,51 +331,12 @@ namespace PeopleCalculation {
 	bool isConnected()
 	{
 		bool connection = false;
-		if (sendData({ 1 }).size() == 0)
+		if (sendData({ 1 })[0] == 0)
 		{
-			MessageBox::Show("Device is not connected");
+			MessageBox::Show("Please connect a required device, and choose it in the list.");
 		}
 		else connection = true;
 		return connection;
-	}
-
-
-	// Get list of connected devices
-	void FillComboBoxWithDevices(HWND comboBoxHandle)
-	{
-		// Initialize COM library
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-
-		// Create a connection to the WMI service
-		IWbemLocator* pLocator = NULL;
-		IWbemServices* pServices = NULL;
-		CoCreateInstance(CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLocator);
-		pLocator->ConnectServer(_bstr_t(L"ROOT\\CIMV2"), NULL, NULL, NULL, 0, NULL, NULL, &pServices);
-
-		// Query the WMI service for the list of connected devices
-		IEnumWbemClassObject* pEnumerator = NULL;
-		pServices->ExecQuery(_bstr_t(L"WQL"), _bstr_t(L"SELECT * FROM Win32_PnPEntity"), WBEM_FLAG_FORWARD_ONLY, NULL, &pEnumerator);
-
-		// Iterate through the list of devices and add them to the combobox
-		IWbemClassObject* pObject = NULL;
-		ULONG uReturned = 0;
-		while (pEnumerator->Next(WBEM_INFINITE, 1, &pObject, &uReturned) == S_OK)
-		{
-			VARIANT var;
-			pObject->Get(L"Caption", 0, &var, NULL, NULL);
-			if (var.vt == VT_BSTR)
-			{
-				SendMessage(comboBoxHandle, CB_ADDSTRING, 0, (LPARAM)var.bstrVal);
-			}
-			VariantClear(&var);
-			pObject->Release();
-		}
-
-		// Clean up
-		pEnumerator->Release();
-		pServices->Release();
-		pLocator->Release();
-		CoUninitialize();
 	}
 
 
@@ -379,7 +351,7 @@ namespace PeopleCalculation {
 	// Enumerate connected devices and add their friendly names to the combobox
 	void EnumerateDevices(HWND combobox) {
 		// Get the device information set for all present devices
-		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&GUID_DEVINTERFACE_COMPORT, nullptr, nullptr, DIGCF_PRESENT);
+		HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&GUID_DEVINTERFACE_SERENUM_BUS_ENUMERATOR, nullptr, nullptr, DIGCF_PRESENT);
 		if (deviceInfoSet == INVALID_HANDLE_VALUE) {
 			// Failed to get device information set
 			return;
@@ -395,17 +367,28 @@ namespace PeopleCalculation {
 				reinterpret_cast<PBYTE>(friendlyName), sizeof(friendlyName), nullptr)) {
 				// Add the friendly name to the combobox
 				std::string friendlyNameMB = WideToMultiByte(friendlyName);
-				SendMessage(combobox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(friendlyNameMB.c_str()));
+				//SendMessage(combobox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(friendlyNameMB.c_str()));
+				comboBox1->Items->Add(gcnew String(friendlyNameMB.c_str()));
 			}
 		}
-
 		// Clean up
 		SetupDiDestroyDeviceInfoList(deviceInfoSet);
 	}
 
+	// Extract COM port number from device name
+	int extractCOMPortNumber(String^ deviceName)
+	{
+		int COMPortNumber = -1;
 
-
-
+		for (int i = 0; i < deviceName->Length; i++)
+		{
+			if (deviceName[i] == 'C')
+				if (deviceName[i + 1] == 'O')
+					if (deviceName[i + 2] == 'M')
+						COMPortNumber = int(deviceName[i + 3] - '0');
+		}
+		return COMPortNumber;
+	}
 
 // Get data from device
 private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
@@ -498,6 +481,56 @@ private: System::Void button4_Click(System::Object^ sender, System::EventArgs^ e
 private: System::Void comboBox1_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e) {
 
 
+	// COM port selection
+	String^ COMPort = "COM";	// Must be in "COM#:" format!
+
+	COMPort += extractCOMPortNumber(comboBox1->SelectedItem->ToString()) + ":";
+	pin_ptr<const wchar_t> wch = PtrToStringChars(COMPort);
+	const wchar_t* wcharCOMPort = wch;
+
+	// Setting up a serial port
+	DCB dcbSerialParams = { 0 };
+	COMMTIMEOUTS timeouts = { 0 };
+
+	hSerial = CreateFile(wcharCOMPort, GENERIC_READ | GENERIC_WRITE, 0,
+		NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (hSerial == INVALID_HANDLE_VALUE)
+	{
+		MessageBox::Show("Error opening serial port.");
+	}
+	else
+	{
+		// Setting the serial port parameters
+		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+		if (!GetCommState(hSerial, &dcbSerialParams))
+		{
+			MessageBox::Show("Error getting serial port state");
+		}
+		dcbSerialParams.BaudRate = CBR_115200;
+		dcbSerialParams.ByteSize = 8;
+		dcbSerialParams.Parity = NOPARITY;
+		dcbSerialParams.StopBits = ONESTOPBIT;
+		// Serial port parameters check
+		if (!GetCommState(hSerial, &dcbSerialParams))
+		{
+			MessageBox::Show("Error getting serial port state");
+		}
+
+		// Setting a 2-second timeouts for reading and writing data
+		timeouts.ReadTotalTimeoutConstant = 2000;
+		timeouts.ReadIntervalTimeout = 2000;
+		timeouts.ReadTotalTimeoutMultiplier = 10;
+		timeouts.WriteTotalTimeoutConstant = 2000;
+		timeouts.WriteTotalTimeoutMultiplier = 10;
+		// Timeouts settings check
+		if (!SetCommTimeouts(hSerial, &timeouts))
+		{
+			MessageBox::Show("Error setting timeouts");
+		}
+	}
+
+	// Switch to the next screen
 	comboBox1->Visible = false;
 
 	label1->Visible = true;
@@ -509,6 +542,7 @@ private: System::Void comboBox1_SelectedIndexChanged(System::Object^ sender, Sys
 	button2->Visible = true;
 	button3->Visible = true;
 	button4->Visible = true;
+
 }
 
 };
